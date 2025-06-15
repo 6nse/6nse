@@ -7,7 +7,7 @@ from get_obj_det_models import (
     inference_florence,
 )
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from typing import Annotated
 import numpy as np
 import torch
@@ -20,30 +20,12 @@ os.environ["HF_DATASETS_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-depth_model, depth_image_processor = get_depth_anything_v2_model(device)
+depth_model, depth_image_processor = get_depth_anything_v2_model(
+    device, size="large", type="Indoor"
+)
 object_detection_model, obj_detection_processor = get_florence2_model(device)
 
 app = FastAPI()
-
-
-@app.post("/depth")
-async def get_depth(file: Annotated[bytes, File()], centers: list):
-    # Decode the image
-    nparr = np.frombuffer(file, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    print("Image shape:", img.shape)
-    depth_values = []
-    depth = depth_anything_v2_inference(device, depth_model, depth_image_processor, img)
-    print("Predicted Depth Shape:", depth.shape)
-    print("Predicted Depth Value at center (0,0):", depth[0, 0])
-    for center in centers:
-        center = tuple(center)
-        print("Center:", center)
-        print("Image shape:", img.shape)
-        print("Predicted Depth Shape:", depth.shape)
-        print("Predicted Depth Value:", depth[center])
-        depth_values.append(depth[center])
-    return {"predicted_depth": depth_values}
 
 
 @app.post("/phase_grounding")
@@ -79,12 +61,14 @@ async def get_phase_grounding(file: Annotated[bytes, File()]):
 
 
 @app.post("/phase_grounding_and_depth_estimation")
-async def get_phase_grounding_and_depth_estimation(file: Annotated[bytes, File()]):
+async def get_phase_grounding_and_depth_estimation(
+    file: Annotated[bytes, File()], text_input: Annotated[str, Form()]
+):
     nparr = np.frombuffer(file, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
-    text_input = "A man."
+    text_input = text_input
     detections = inference_florence(
         img,
         object_detection_model,

@@ -13,7 +13,9 @@ import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-depth_model, depth_image_processor = get_depth_anything_v2_model(device)
+depth_model, depth_image_processor = get_depth_anything_v2_model(
+    device, size="small", type="Indoor"
+)
 object_detection_model, obj_detection_processor = get_florence2_model(device)
 
 cap = cv2.VideoCapture(0)
