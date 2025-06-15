@@ -65,7 +65,7 @@ for i, image_path in enumerate(image_list):
             center[::-1],
             cv2.FONT_HERSHEY_SIMPLEX,
             0.5,
-            (0, 0, 0),
+            (0, 255, 0),
             3,
         )
 
