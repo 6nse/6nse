@@ -1,6 +1,7 @@
 from get_depth_models import (
     get_depth_anything_v2_model,
     depth_anything_v2_inference,
+    draw_depth_annotated_image,
 )
 from get_obj_det_models import (
     get_florence2_model,
@@ -8,7 +9,11 @@ from get_obj_det_models import (
     inference_florence_general,
 )
 
+from PIL import Image
+from io import BytesIO
+
 from fastapi import FastAPI, File, Form
+from fastapi.responses import StreamingResponse
 from typing import Annotated
 import numpy as np
 import torch
@@ -25,6 +30,23 @@ depth_model, depth_image_processor = get_depth_anything_v2_model(
 object_detection_model, obj_detection_processor = get_florence2_model(device)
 
 app = FastAPI()
+
+
+@app.post("/depth")
+async def get_depth(file: Annotated[bytes, File()]):
+    nparr = np.frombuffer(file, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    depth = depth_anything_v2_inference(device, depth_model, depth_image_processor, img)
+    depth_image = draw_depth_annotated_image(img, depth)
+
+    image = Image.fromarray(depth_image)
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type="image/png")
 
 
 @app.post("/phase_grounding")

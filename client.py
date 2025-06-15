@@ -2,9 +2,8 @@ import cv2
 import requests
 import time
 
-url = (
-    "https://cl39uuhdwxc25d-8000.proxy.runpod.net/phase_grounding_and_depth_estimation"
-)
+url = "https://cl39uuhdwxc25d-8000.proxy.runpod.net/ocr"
+
 text_input = "A man and bunch of chairs"
 
 cap = cv2.VideoCapture(0)  # 0 for default camera
@@ -15,15 +14,14 @@ while True:
     ret, frame = cap.read()
     if not ret:
         break
-    # Encode frame as JPEG
     _, img_encoded = cv2.imencode(".jpg", frame)
     img_bytes = img_encoded.tobytes()
 
     files = {"file": ("frame.jpg", img_bytes, "image/jpeg")}
-    data = {"text_input": text_input}
+    # data = {"text_input": text_input}
 
     try:
-        response = requests.post(url, headers=headers, files=files, data=data)
+        response = requests.post(url, headers=headers, files=files)
         print(response.status_code)
         print(response.json())  # or handle response content
     except Exception as e:
