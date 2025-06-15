@@ -2,8 +2,6 @@ from get_depth_models import (
     get_depth_anything_v2_model,
     depth_anything_v2_inference,
     draw_depth_annotated_image,
-    get_apple_depth_pro_model,
-    apple_depth_pro_inference,
 )
 from get_obj_det_models import (
     get_florence2_model,
@@ -30,9 +28,8 @@ depth_model, depth_image_processor = get_depth_anything_v2_model(
     device, size="large", type="Indoor"
 )
 object_detection_model, obj_detection_processor = get_florence2_model(device)
-apple_depth_pro_model, apple_depth_pro_image_processor = get_apple_depth_pro_model(
-    device
-)
+
+
 app = FastAPI()
 
 
@@ -46,23 +43,6 @@ async def get_depth(file: Annotated[bytes, File()]):
 
     image = Image.fromarray(depth_image)
 
-    buffer = BytesIO()
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-
-    return StreamingResponse(buffer, media_type="image/png")
-
-
-@app.post("/depthpro")
-async def depthpro(file: Annotated[bytes, File()]):
-    nparr = np.frombuffer(file, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-    depth = apple_depth_pro_inference(
-        device, apple_depth_pro_model, apple_depth_pro_image_processor, img
-    )
-    depth_image = draw_depth_annotated_image(img, depth)
-    image = Image.fromarray(depth_image)
     buffer = BytesIO()
     image.save(buffer, format="PNG")
     buffer.seek(0)
