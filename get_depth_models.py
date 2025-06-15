@@ -42,3 +42,33 @@ def draw_depth_annotated_image(frame, predicted_depth):
     annotated_image = (annotated_image * 255.0).astype(np.uint8)
 
     return annotated_image
+
+
+def get_apple_depth_pro_model(device):
+    from transformers import DepthProImageProcessorFast, DepthProForDepthEstimation
+
+    image_processor = DepthProImageProcessorFast.from_pretrained("apple/DepthPro-hf")
+    model = DepthProForDepthEstimation.from_pretrained("apple/DepthPro-hf").to(device)
+
+    return model, image_processor
+
+
+def apple_depth_pro_inference(device, model, image_processor, frame):
+    inputs = image_processor(images=frame, return_tensors="pt").to(device)
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    post_processed_output = image_processor.post_process_depth_estimation(
+        outputs,
+        target_sizes=[(frame.shape[0], frame.shape[1])],
+    )
+
+    field_of_view = post_processed_output[0]["field_of_view"]
+    focal_length = post_processed_output[0]["focal_length"]
+    print("Field of View:", field_of_view)
+    print("Focal Length:", focal_length)
+    depth = post_processed_output[0]["predicted_depth"]
+    depth = depth.squeeze().cpu().numpy()
+
+    return depth
