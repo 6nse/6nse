@@ -20,7 +20,6 @@ while True:
 
     try:
         response = requests.post(url, headers=headers, files=files)
-        print(response.status_code)
         if response.status_code == 200:
             nparr = np.frombuffer(response.content, np.uint8)
             depth_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -37,7 +36,7 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-    time.sleep(500)  # Wait 1 second between frames (adjust as needed)
+    time.sleep(1)  # Wait 1 second between frames (adjust as needed)
 
 cap.release()
 cv2.destroyAllWindows()
