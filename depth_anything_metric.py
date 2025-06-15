@@ -17,7 +17,7 @@ model = AutoModelForDepthEstimation.from_pretrained(
 frame = cv2.imread("path_to_your_image.jpg")  # Replace with your image path
 
 image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-inputs = image_processor(images=image, return_tensors="pt", use_fast=True).to(device)
+inputs = image_processor(images=image, return_tensors="pt").to(device)
 
 with torch.no_grad():
     outputs = model(**inputs)

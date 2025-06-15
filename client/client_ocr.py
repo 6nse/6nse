@@ -3,12 +3,9 @@ import requests
 import time
 
 url = "https://cl39uuhdwxc25d-8000.proxy.runpod.net/ocr"
-
-text_input = "A man and bunch of chairs"
+headers = {"accept": "application/json"}
 
 cap = cv2.VideoCapture(0)  # 0 for default camera
-
-headers = {"accept": "application/json"}
 
 while True:
     ret, frame = cap.read()
@@ -18,16 +15,22 @@ while True:
     img_bytes = img_encoded.tobytes()
 
     files = {"file": ("frame.jpg", img_bytes, "image/jpeg")}
-    # data = {"text_input": text_input}
 
     try:
         response = requests.post(url, headers=headers, files=files)
-        print(response.status_code)
         print(response.json())  # or handle response content
+        cv2.putText(
+            frame,
+            "OCR Result: " + str(response.json()),
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 0, 0),
+            2,
+        )
     except Exception as e:
         print(f"Error: {e}")
 
-    # Display the frame locally (optional)
     cv2.imshow("Live Feed", frame)
 
     # Press 'q' to quit

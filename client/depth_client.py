@@ -37,7 +37,7 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
-    time.sleep(1)  # Wait 1 second between frames (adjust as needed)
+    time.sleep(500)  # Wait 1 second between frames (adjust as needed)
 
 cap.release()
 cv2.destroyAllWindows()
