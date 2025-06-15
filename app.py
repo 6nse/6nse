@@ -14,7 +14,6 @@ import torch
 import cv2
 import os
 import json
-
 import requests
 
 os.environ["HF_DATASETS_OFFLINE"] = "1"
@@ -35,6 +34,8 @@ async def get_depth(file: Annotated[bytes, File()], centers: list):
     print("Image shape:", img.shape)
     depth_values = []
     depth = depth_anything_v2_inference(device, depth_model, depth_image_processor, img)
+    print("Predicted Depth Shape:", depth.shape)
+    print("Predicted Depth Value at center (0,0):", depth[0, 0])
     for center in centers:
         center = tuple(center)
         print("Center:", center)
@@ -93,6 +94,8 @@ async def get_phase_grounding_and_depth_estimation(file: Annotated[bytes, File()
         device,
     )
 
+    print("Detections:", detections)
+
     detections_list = []
     for detection in detections:
         x1, y1, x2, y2 = detection[0]
@@ -100,22 +103,22 @@ async def get_phase_grounding_and_depth_estimation(file: Annotated[bytes, File()
             {
                 "bbox": [int(x1), int(y1), int(x2), int(y2)],
                 "label": detection[5],
-                "center": (int((x1 + x2) / 2), int((y1 + y2) / 2)),
+                "center": (int((y1 + y2) / 2), int((x1 + x2) / 2)),
             }
         )
 
+    print("Detections List:", detections_list)
     depth = depth_anything_v2_inference(device, depth_model, depth_image_processor, img)
     depth_values = []
 
     for detection in detections_list:
+        print("Processing detection:", detection)
         center = detection["center"]
         print("Center:", center)
-        print("Image shape:", img.shape)
-        print("Predicted Depth Shape:", depth.shape)
-        print("Predicted Depth Value:", depth[center])
         depth_values.append(depth[center])
+    print("Depth Values:", depth_values)
 
     for i, detection in enumerate(detections_list):
-        detection["depth"] = depth_values[i]
+        detection["depth"] = float(depth_values[i])
 
     return {"grounding_detection_and_depth": detections_list}
