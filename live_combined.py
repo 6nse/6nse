@@ -3,7 +3,7 @@ from get_obj_det_models import (
     get_yolo_world_model,
     yolo_world_inference,
     get_florence2_model,
-    inference_florence,
+    inference_florence_od,
     draw_detections_sv,
 )
 
@@ -33,7 +33,7 @@ while True:
     task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
     text_input = "A man."
 
-    detections = inference_florence(
+    detections = inference_florence_od(
         frame,
         object_detection_model,
         obj_detection_processor,

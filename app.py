@@ -4,17 +4,16 @@ from get_depth_models import (
 )
 from get_obj_det_models import (
     get_florence2_model,
-    inference_florence,
+    inference_florence_od,
+    inference_florence_general,
 )
 
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, Form
 from typing import Annotated
 import numpy as np
 import torch
 import cv2
 import os
-import json
-import requests
 
 os.environ["HF_DATASETS_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -29,15 +28,17 @@ app = FastAPI()
 
 
 @app.post("/phase_grounding")
-async def get_phase_grounding(file: Annotated[bytes, File()]):
+async def get_phase_grounding(
+    file: Annotated[bytes, File()], text_input: Annotated[str, Form()]
+):
     # Decode the image
     nparr = np.frombuffer(file, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     print("Image shape:", img.shape)
 
     task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
-    text_input = "A man."
-    detections = inference_florence(
+    text_input = text_input
+    detections = inference_florence_od(
         img,
         object_detection_model,
         obj_detection_processor,
@@ -69,7 +70,7 @@ async def get_phase_grounding_and_depth_estimation(
 
     task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
     text_input = text_input
-    detections = inference_florence(
+    detections = inference_florence_od(
         img,
         object_detection_model,
         obj_detection_processor,
@@ -106,3 +107,41 @@ async def get_phase_grounding_and_depth_estimation(
         detection["depth"] = float(depth_values[i])
 
     return {"grounding_detection_and_depth": detections_list}
+
+
+@app.post("/caption")
+async def get_caption(file: Annotated[bytes, File()]):
+    nparr = np.frombuffer(file, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    task_prompt = "<MORE_DETAILED_CAPTION>"
+    text_input = None
+    output = inference_florence_general(
+        img,
+        object_detection_model,
+        obj_detection_processor,
+        task_prompt,
+        text_input,
+        device,
+    )["<MORE_DETAILED_CAPTION>"]
+
+    return {"caption": output}
+
+
+@app.post("/ocr")
+async def get_ocr(file: Annotated[bytes, File()]):
+    nparr = np.frombuffer(file, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    task_prompt = "<OCR>"
+    text_input = None
+    output = inference_florence_general(
+        img,
+        object_detection_model,
+        obj_detection_processor,
+        task_prompt,
+        text_input,
+        device,
+    )["<OCR>"]
+
+    return {"ocr": output}

@@ -1,7 +1,7 @@
 from get_depth_models import get_depth_anything_v2_model, depth_anything_v2_inference
 from get_obj_det_models import (
     get_florence2_model,
-    inference_florence,
+    inference_florence_od,
     draw_detections_sv,
 )
 
@@ -41,7 +41,7 @@ for i, image_path in enumerate(image_list):
 
     task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
     text_input = "A man."
-    detections = inference_florence(
+    detections = inference_florence_od(
         frame,
         object_detection_model,
         obj_detection_processor,

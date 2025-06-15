@@ -46,7 +46,9 @@ def draw_detections_sv(image, detections):
     return annotated_frame
 
 
-def inference_florence(frame, model, processor, task_prompt, text_prompt, device):
+def inference_florence_general(
+    frame, model, processor, task_prompt, text_prompt, device
+):
     if text_prompt is not None:
         prompt = task_prompt + text_prompt
     else:
@@ -61,14 +63,20 @@ def inference_florence(frame, model, processor, task_prompt, text_prompt, device
         num_beams=3,
     )
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
-    print(generated_text)
     parsed = processor.post_process_generation(
         generated_text, task=task_prompt, image_size=pil_img.size
     )
 
+    return parsed
+
+
+def inference_florence_od(frame, model, processor, task_prompt, text_prompt, device):
+    pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    parsed = inference_florence_general(
+        frame, model, processor, task_prompt, text_prompt, device
+    )
     # Convert to BoundingBox detections
     detections = sv.Detections.from_lmm(
         sv.LMM.FLORENCE_2, parsed, resolution_wh=pil_img.size
     )
-    print(detections)
     return detections
